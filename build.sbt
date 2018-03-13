@@ -7,7 +7,8 @@ scalacOptions += "-Ypartial-unification"
 lazy val doobieVersion = "0.5.1"
 
 libraryDependencies ++= Seq(
-  "org.tpolecat" %% "doobie-core"     % doobieVersion,
+  "org.tpolecat" %% "doobie-core" % doobieVersion,
   "org.tpolecat" %% "doobie-postgres" % doobieVersion,
-  "org.tpolecat" %% "doobie-specs2"   % doobieVersion
+  "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test
 )
