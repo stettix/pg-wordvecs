@@ -21,19 +21,17 @@ object LoadVectors extends App {
     pass = ""
   )
 
-  populateTable()
-
   val repo = new WordVectorsRepo("glove_6b_50d")
+  repo.init()
+  repo.insertExamples()
+
+  // Run some example queries.
+
   val wordVec: Option[WordVector] = repo.vectorForWord("the")
   println(s"Vector for 'the': $wordVec")
 
   val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
   println(s"Most similar vectors for 'the':")
   mostSimilar.foreach(_.foreach(println))
-
-  def populateTable()(implicit tx: Transactor.Aux[IO, Unit]): Unit = {
-    // TODO: Create schema here if it doesn't exist already? Might be a simple way to do things?
-    // TODO!
-  }
 
 }
