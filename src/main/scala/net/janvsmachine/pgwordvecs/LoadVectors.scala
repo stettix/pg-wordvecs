@@ -1,44 +1,39 @@
 package net.janvsmachine.pgwordvecs
 
+import doobie._
+import cats.effect._
+
 /**
   * Command line utility for loading GloVe word vectors into PostgreSQL.
   */
 object LoadVectors extends App {
 
   // TODO:
-
   // Read needed args, e.g. DB host + post, username & password [optional], schema name, table name.
   // And gloVe file path.
-
-  // TODO: Create schema here if it doesn't exist already? Might be a simple way to do things?
-
   // Stream the gloVe file (using FS2??) into the DB
 
-  writeRow()
+  // A transactor that gets connections from java.sql.DriverManager
+  implicit val xa: Transactor.Aux[IO, Unit] = Transactor.fromDriverManager[IO](
+    driver = "org.postgresql.Driver",
+    url = "jdbc:postgresql:postgres",
+    user = "postgres",
+    pass = ""
+  )
 
-  def writeRow(): Unit = {
-    import doobie._
-    import doobie.implicits._
+  populateTable()
 
-    import cats._
-    import cats.effect._
-    import cats.implicits._
+  val repo = new WordVectorsRepo("glove_6b_50d")
+  val wordVec: Option[WordVector] = repo.vectorForWord("the")
+  println(s"Vector for 'the': $wordVec")
 
-    val program1 = 42.pure[ConnectionIO]
+  val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
+  println(s"Most similar vectors for 'the':")
+  mostSimilar.foreach(_.foreach(println))
 
-    // A transactor that gets connections from java.sql.DriverManager
-    val xa = Transactor.fromDriverManager[IO](
-      driver = "org.postgresql.Driver",
-      url = "jdbc:postgresql:postgres",
-      user = "postgres",
-      pass = ""
-    )
-
-    val io: IO[Int] = program1.transact(xa)
-
-    val res: Int = io.unsafeRunSync()
-
-    println(s"Ta-da! $res")
+  def populateTable()(implicit tx: Transactor.Aux[IO, Unit]): Unit = {
+    // TODO: Create schema here if it doesn't exist already? Might be a simple way to do things?
+    // TODO!
   }
 
 }
