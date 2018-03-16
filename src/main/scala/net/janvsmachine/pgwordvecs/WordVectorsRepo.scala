@@ -1,14 +1,12 @@
 package net.janvsmachine.pgwordvecs
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
 
+import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import cats.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import cats.effect.IO
-import PgCube.implicits._
+import net.janvsmachine.pgwordvecs.PgCube.implicits._
 
 import scala.io.{Codec, Source}
 
@@ -81,7 +79,16 @@ class WordVectorsRepo(tableName: String)(implicit xa: Transactor.Aux[IO, Unit]) 
     io.unsafeRunSync().map { case (word, cube) => WordVector(word, cube.vector) }
   }
 
-  def mostSimilarWords(word: String): Vector[String] = ???
+  def mostSimilarWords(word: String): Vector[String] = {
+    val query = fr"select word from " ++ Fragment.const(tableName) ++
+      fr" order by (select vector from " ++ Fragment.const(tableName) ++
+      fr" where word = $word) <-> vector limit 10"
+
+    val program = query.query[String].to[Vector]
+    val io = program.transact(xa)
+
+    io.unsafeRunSync()
+  }
 
 }
 
@@ -126,6 +133,12 @@ object WordVectorsRepoExample extends App {
     val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
     println(s"Most similar vectors for 'fish':")
     mostSimilar.foreach(_.foreach(println))
+  }
+
+  {
+    val exampleWord = "car"
+    println(s"Most similar words for '$exampleWord':")
+    repo.mostSimilarWords(exampleWord).foreach(println)
   }
 
 }
