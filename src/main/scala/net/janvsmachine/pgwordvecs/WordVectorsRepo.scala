@@ -49,15 +49,18 @@ class WordVectorsRepo(tableName: String)(implicit xa: Transactor.Aux[IO, Unit]) 
 
   def insert(wv: WordVector): ConnectionIO[Int] = {
     val cube = PgCube(wv.vector)
-    val query = fr"insert into " ++ Fragment.const(tableName) ++ fr" (word, vector) values (${wv.word}, $cube) on conflict do nothing"
+    val query = fr"insert into " ++ Fragment.const(tableName) ++
+      fr""" (word, vector) values (${wv.word}, $cube)
+            on conflict do nothing"""
     query.update.run
   }
 
+  // TODO: remove the duplication with the above
   private def insertOp(wv: WordVector): Update0 = {
     val cube = PgCube(wv.vector)
     val query = fr"insert into " ++ Fragment.const(tableName) ++
       fr""" (word, vector) values (${wv.word}, $cube)
-            on conflict do nothing""".stripMargin
+            on conflict do nothing"""
     query.update
   }
 
@@ -90,6 +93,19 @@ class WordVectorsRepo(tableName: String)(implicit xa: Transactor.Aux[IO, Unit]) 
     io.unsafeRunSync()
   }
 
+  /**
+    * Returns the words that has the most similar relations to word C as word A has to word B.
+    * In other words, the query is:
+    * 'Word A is to word B as word C is to what?"
+    */
+  def relatedWords(wordA: String, wordB: String, wordC: String): Option[Vector[String]] =
+    for {
+      vecA <- vectorForWord(wordA)
+      vecB <- vectorForWord(wordB)
+      vecC <- vectorForWord(wordC)
+      diff = (vecB.vector zip vecA.vector).map { case (x, y) => x - y } // Not a very efficient vector operation but fine for this...
+      targetVec = (vecC.vector zip diff).map { case (x, y) => x + y } // Ditto
+    } yield mostSimilarVectors(targetVec).map(_.word).filterNot(Set(wordA, wordB, wordC).contains)
 }
 
 object WordVectorsRepo {
@@ -99,46 +115,6 @@ object WordVectorsRepo {
     val (word, values) = (fields.head, fields.drop(1))
     val vector = values.map(_.toDouble)
     WordVector(word, vector)
-  }
-
-}
-
-object WordVectorsRepoExample extends App {
-
-  implicit val xa: Transactor.Aux[IO, Unit] = Transactor.fromDriverManager[IO](
-    driver = "org.postgresql.Driver",
-    url = "jdbc:postgresql:postgres",
-    user = "postgres",
-    pass = ""
-  )
-
-  val repo = new WordVectorsRepo("glove_6b_50d")
-  repo.init()
-
-  // Run some example queries.
-
-  {
-    val wordVec: Option[WordVector] = repo.vectorForWord("the")
-    println(s"Vector for 'the': $wordVec")
-
-    val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
-    println(s"Most similar vectors for 'the':")
-    mostSimilar.foreach(_.foreach(println))
-  }
-
-  {
-    val wordVec: Option[WordVector] = repo.vectorForWord("fish")
-    println(s"Vector for 'fish': $wordVec")
-
-    val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
-    println(s"Most similar vectors for 'fish':")
-    mostSimilar.foreach(_.foreach(println))
-  }
-
-  {
-    val exampleWord = "car"
-    println(s"Most similar words for '$exampleWord':")
-    repo.mostSimilarWords(exampleWord).foreach(println)
   }
 
 }
