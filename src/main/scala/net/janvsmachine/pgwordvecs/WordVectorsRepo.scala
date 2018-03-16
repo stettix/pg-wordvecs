@@ -1,12 +1,9 @@
 package net.janvsmachine.pgwordvecs
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 
 import doobie._
 import doobie.implicits._
-import cats._
-import cats.syntax._
-import cats.data._
 import cats.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
@@ -18,8 +15,6 @@ import scala.io.{Codec, Source}
 class WordVectorsRepo(tableName: String)(implicit xa: Transactor.Aux[IO, Unit]) {
 
   import WordVectorsRepo._
-
-  private val table = Fragment.const(tableName)
 
   def init(): Unit = {
     val createTable =
@@ -97,6 +92,40 @@ object WordVectorsRepo {
     val (word, values) = (fields.head, fields.drop(1))
     val vector = values.map(_.toDouble)
     WordVector(word, vector)
+  }
+
+}
+
+object WordVectorsRepoExample extends App {
+
+  implicit val xa: Transactor.Aux[IO, Unit] = Transactor.fromDriverManager[IO](
+    driver = "org.postgresql.Driver",
+    url = "jdbc:postgresql:postgres",
+    user = "postgres",
+    pass = ""
+  )
+
+  val repo = new WordVectorsRepo("glove_6b_50d")
+  repo.init()
+
+  // Run some example queries.
+
+  {
+    val wordVec: Option[WordVector] = repo.vectorForWord("the")
+    println(s"Vector for 'the': $wordVec")
+
+    val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
+    println(s"Most similar vectors for 'the':")
+    mostSimilar.foreach(_.foreach(println))
+  }
+
+  {
+    val wordVec: Option[WordVector] = repo.vectorForWord("fish")
+    println(s"Vector for 'fish': $wordVec")
+
+    val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
+    println(s"Most similar vectors for 'fish':")
+    mostSimilar.foreach(_.foreach(println))
   }
 
 }
