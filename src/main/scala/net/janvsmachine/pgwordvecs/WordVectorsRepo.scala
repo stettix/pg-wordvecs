@@ -2,6 +2,7 @@ package net.janvsmachine.pgwordvecs
 
 import java.nio.file.Path
 
+import breeze.linalg.{norm, DenseVector}
 import cats.effect.IO
 import cats.implicits._
 import doobie._
@@ -35,16 +36,24 @@ class WordVectorsRepo(tableName: String)(implicit xa: Transactor.Aux[IO, Unit]) 
   def loadFromFile(path: Path): Unit = {
     println(s"Reading from file $path")
 
-    // TODO: Stream this instead, and update in batches? Then again, this brute force implemenetations works fine...
+    // TODO: Stream this instead of reading it into memory, and update in batches?
+    // Then again, this brute force implementations works OK...
     val lines = Source.fromFile(path.toFile)(Codec.UTF8).getLines()
     val parsed: List[WordVector] = lines.map(parseGloveLine).toList
     println(s"Parsed ${parsed.size} word vectors")
 
-    val ops: List[Update0] = parsed.map(insertOp)
+    val normalised: List[WordVector] = parsed.map(x => x.copy(vector = normalise(x.vector)))
+
+    val ops: List[Update0] = normalised.map(insertOp)
     val combined: ConnectionIO[List[Int]] = ops.traverse(_.run)
     val res: Seq[Int] = combined.transact(xa).unsafeRunSync
 
     println("Results: " + res.distinct)
+  }
+
+  def normalise(v: Vector[Double]): Vector[Double] = {
+    val dv = DenseVector(v.toArray)
+    (dv / norm(dv)).toScalaVector()
   }
 
   def insert(wv: WordVector): ConnectionIO[Int] = {

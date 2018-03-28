@@ -17,7 +17,6 @@ object LoadVectors {
     // TODO:
     // Read needed args, e.g. DB host + post, username & password [optional], schema name, table name.
     // And gloVe file path.
-    // Stream the gloVe file (using FS2??) into the DB
 
     // A transactor that gets connections from java.sql.DriverManager
     implicit val xa: Transactor.Aux[IO, Unit] = Transactor.fromDriverManager[IO](
