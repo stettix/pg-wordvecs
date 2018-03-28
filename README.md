@@ -23,6 +23,9 @@ provided that the 'cube' extension is available (see details below).
 
 The tool will create the necessary table and index if it doesn't exist already.
 
+Note that the 'cube' extension has a limit of 100 on the size of vectors by default. The GloVe dataset with word vectors
+of size 50 works well.
+
 ## Querying word vectors in PostgreSQL
 
 The `QueryExamples` app contains some of example queries that can be run on the loaded word vectors.
@@ -60,13 +63,13 @@ So this is nice and easy.
 
 However, to answer queries along the line of "X is to Y what Z is to ...", we need to find the distance between two
 points (X and Y), and add this to the vector for word Z. However, the cube extension doesn't provide addition and subtraction
-operation on cubes, nor does PostgreSQL come with such operators for array types. Hence we implemented this in client-side
+operation on cubes, nor does PostgreSQL come with such operators for array types. Hence I implemented this in client-side
 code instead. This is a bit disappointing and limits the use cases for this setup.
 
 ### Distance metrics
 
 The [kNN implementation](https://www.postgresql.org/message-id/9E07E159-E405-41E2-9889-A04F534FC257@gmail.com) we're using here
-supports various distance metrics: euclidian, taxicab (i.e. manhattan) and chebyshev distance. We're using euclidian distances
+supports various distance metrics: euclidian, taxicab (i.e. manhattan) and chebyshev distance. I'm using euclidian distances
 in these examples.
 
 When comparing vectors, cosine-distance is often a useful metric. This can not be implemented using a kNN algorithm so is not
@@ -84,7 +87,7 @@ made to tune this or figure out why the results vary so much, so take these numb
 
 This was just an experiement to see how well the `cube` extension works for vector similarity operations. From our results
 it seems to work pretty well. That said, with datasets as small as the WordVectors we've used here, you're probably better
-off storing these in memory either using a brute force table scanm, or an in-memory data structure like an R-tree or similar.
+off storing these in memory either using a brute force table scan, or an in-memory data structure like an R-tree or similar.
 
 That said, being able to keep and update vector data like this in a database and use all the tools that come with it 
 is potentially valuable.
