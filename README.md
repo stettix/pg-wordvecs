@@ -9,11 +9,11 @@ Word vectors are very cool - see Adrian Colyer's [The amazing power of word vect
 for an introduction. Here we use word vectors from the [GloVe project](https://nlp.stanford.edu/projects/glove/).
                     
 Recent versions of PostgreSQL come with an extension, "cube", that provides a column type for cubes and points of 
-arbitrary dimensions, and crucially, implements indexing and distance functions for these entities. and "K-nearest neighbors" algorithm
+arbitrary dimensions, and crucially, implements indexing and distance functions for these entities, and a 'K-nearest neighbors' algorithm
 for efficiently finding similar values.
 
-Put the two together, and we have a way of finding words that have a similar meaning to each other, for example.
-This code in this project explores a couple of use cases for word vectors, implemented using PostgreSQL. 
+Put the two together, and we have a way of running queries on how words relate to each other. 
+This code in this project explores a couple of such use cases. 
 
 ## Loading word vectors into PostgreSQL
 
@@ -30,9 +30,13 @@ of size 50 works well.
 
 The `QueryExamples` app contains some of example queries that can be run on the loaded word vectors.
  
+### Finding similar words
+
 This includes finding the list of most similar words to a word. For example, finding the words most similar to 'car'
 returns car, truck, cars, vehicle, driver, driving, bus etc. The words most similar to 'knitting' are: 'sewing', 'dyeing',
 'embroidery', 'weaving' and so on.
+
+### Navigating word relationships
 
 It also runs code to use existing word relationships to find equivalent relationships. This basically answers queries
 of the form "X is to Y as Z is to ...?". Some example results returned:
@@ -48,7 +52,7 @@ As we see, this works fairly well, even if some of these results don't make sens
 
 ## Discussion
 
-### Queries
+### Query expressivity
 
 To find the most similar words, you can use a a very simple SQL query like this:
 
@@ -108,3 +112,7 @@ You can check that the extension is available by running this query:
 ```
 select cube_union('(0,5,2),(2,3,1)', '0');
 ```
+
+The example code is implemented using [doobie](https://github.com/tpolecat/doobie) for database access, which is fab.
+
+It also uses [breeze](https://github.com/scalanlp/breeze) for the very small amount of linear algebra that it performs.
