@@ -18,15 +18,6 @@ object QueryExamples {
     // Run some example queries.
 
     {
-      val wordVec: Option[WordVector] = repo.vectorForWord("the")
-      println(s"Vector for 'the': $wordVec")
-
-      val mostSimilar: Option[Vector[WordVector]] = wordVec.map(wv => repo.mostSimilarVectors(wv.vector))
-      println(s"Most similar vectors for 'the':")
-      mostSimilar.foreach(_.foreach(println))
-    }
-
-    {
       val wordVec: Option[WordVector] = repo.vectorForWord("fish")
       println(s"Vector for 'fish': $wordVec")
 
