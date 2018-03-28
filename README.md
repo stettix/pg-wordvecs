@@ -87,6 +87,9 @@ So far I've only tried running this against a local single-node PostgreSQL insta
 similarity queries I saw quite variable results depending on the word, from ~60-70 ms to over 400 ms. No attempt has been
 made to tune this or figure out why the results vary so much, so take these numbers with a very large pinch of salt.
 
+This is still much faster that the same query when no spatial index exists, i.e. doing a full table scan - this would
+typically take 3 to 4 seconds. So even in the worst case scenarios seen, it's an order of magnitude faster.
+
 ### So how useful is this really?
 
 This was just an experiement to see how well the `cube` extension works for vector similarity operations. From our results
