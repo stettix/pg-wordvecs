@@ -8,7 +8,7 @@ PostgreSQL instance, and uses this to perform word searches.
 Word vectors are very cool - see Adrian Colyer's [The amazing power of word vectors](https://blog.acolyer.org/2016/04/21/the-amazing-power-of-word-vectors/)
 for an introduction. Here we use word vectors from the [GloVe project](https://nlp.stanford.edu/projects/glove/).
                     
-Recent versions of PostgreSQL come with an extension, "cube", that provides a column type for cubes and points of 
+Recent versions of PostgreSQL come with an extension, [cube](https://www.postgresql.org/docs/current/static/cube.html), that provides a column type for cubes and points of 
 arbitrary dimensions, and crucially, implements indexing and distance functions for these entities, and a 'K-nearest neighbors' algorithm
 for efficiently finding similar values.
 
@@ -19,7 +19,7 @@ This code in this project explores a couple of such use cases.
 
 The `LoadVectors` command line tool reads word vectors from a given file and writes them to PostgreSQL using 
 provided connection details. You can run this against a stock version of PostgreSQL with a sufficiently recent version.
-provided that the 'cube' extension is available (see details below).
+provided that the [cube extension](https://www.postgresql.org/docs/current/static/cube.html) is available (see details below).
 
 The tool will create the necessary table and index if it doesn't exist already.
 
